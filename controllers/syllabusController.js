@@ -4,10 +4,6 @@ import db from "../db.js";
 export const createSyllabus = (req, res) => {
 
     try {
-
-        console.log("BODY:", req.body);
-        console.log("FILE:", req.file);
-
         const {
             session,
             class: className,
@@ -23,7 +19,7 @@ export const createSyllabus = (req, res) => {
             status
         } = req.body;
 
-        const file_url = req.file ? req.file.filename : null;
+        const file = req.file ? req.file.filename : null;
 
         const sql = `
             INSERT INTO syllabus 
@@ -40,7 +36,7 @@ export const createSyllabus = (req, res) => {
                 learning_outcome,
                 reference_material,
                 status,
-                file_url
+                file
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
@@ -60,7 +56,7 @@ export const createSyllabus = (req, res) => {
                 learning_outcome,
                 reference_material,
                 status || "Planned",
-                file_url
+                file
             ],
             (err, result) => {
 
@@ -77,7 +73,7 @@ export const createSyllabus = (req, res) => {
                     success: true,
                     message: "Syllabus created successfully",
                     id: result.insertId,
-                    file_url
+                    file
                 });
             }
         );
@@ -236,7 +232,7 @@ export const updateSyllabus = (req, res) => {
             status
         } = req.body;
 
-        const file_url = req.file ? req.file.filename : null;
+        const file = req.file ? req.file.filename : null;
 
         let sql = `
             UPDATE syllabus SET
@@ -305,9 +301,9 @@ export const updateSyllabus = (req, res) => {
             values.push(status);
         }
 
-        if (file_url) {
-            updates.push("file_url=?");
-            values.push(file_url);
+        if (file) {
+            updates.push("file=?");
+            values.push(file);
         }
 
         if (updates.length === 0) {

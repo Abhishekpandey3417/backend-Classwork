@@ -15,11 +15,11 @@ export const createHPCSyllabus = (req, res) => {
         uploaded_by
     } = req.body;
 
-    const syllabus_pdf = req.file ? req.file.filename : null;
+    const file = req.file ? req.file.filename : null;
 
-    if (!session || !className || !section || !syllabus_pdf) {
+    if (!session || !className || !section || !file) {
         return res.status(400).json({
-            message: "Session, class, section and PDF are required"
+            message: "Session, class, section and file are required"
         });
     }
 
@@ -31,8 +31,8 @@ export const createHPCSyllabus = (req, res) => {
             section,
             syllabus_title,
             description,
-            syllabus_pdf,
-            uploaded_by
+            uploaded_by,
+            file
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
@@ -45,8 +45,8 @@ export const createHPCSyllabus = (req, res) => {
             section,
             syllabus_title,
             description,
-            syllabus_pdf,
-            uploaded_by
+            uploaded_by,
+            file
         ],
         (err, result) => {
 
@@ -58,7 +58,7 @@ export const createHPCSyllabus = (req, res) => {
             res.status(201).json({
                 message: "HPC syllabus uploaded successfully",
                 id: result.insertId,
-                file: syllabus_pdf
+                file
             });
 
         }
@@ -108,7 +108,9 @@ export const getHPCSyllabus = (req, res) => {
 
         const updatedResult = result.map(item => ({
             ...item,
-            pdf_url: `${req.protocol}://${req.get("host")}/uploads/${item.syllabus_pdf}`
+            file_url: item.file
+                ? `${req.protocol}://${req.get("host")}/uploads/${item.file}`
+                : null
         }));
 
         res.status(200).json(updatedResult);
@@ -131,7 +133,7 @@ export const updateHPCSyllabus = (req, res) => {
         uploaded_by
     } = req.body;
 
-    const syllabus_pdf = req.file ? req.file.filename : null;
+    const file = req.file ? req.file.filename : null;
 
     let sql = `
         UPDATE hpc_syllabus
@@ -153,9 +155,9 @@ export const updateHPCSyllabus = (req, res) => {
         uploaded_by
     ];
 
-    if (syllabus_pdf) {
-        sql += ", syllabus_pdf=?";
-        values.push(syllabus_pdf);
+    if (file) {
+        sql += ", file=?";
+        values.push(file);
     }
 
     sql += " WHERE id=?";

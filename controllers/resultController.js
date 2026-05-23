@@ -1,7 +1,8 @@
 import db from "../db.js";
 
-/* ================= CREATE RESULT (WITH PDF UPLOAD) ================= */
+/* ================= CREATE RESULT ================= */
 export const createResult = (req, res) => {
+
     const {
         session,
         class: className,
@@ -18,13 +19,26 @@ export const createResult = (req, res) => {
     const file = req.file ? req.file.filename : null;
 
     if (!session || !className || !section || !exam_type) {
-        return res.status(400).json({ message: "Required fields missing" });
+        return res.status(400).json({
+            message: "Required fields missing"
+        });
     }
 
     const sql = `
         INSERT INTO results
-        (session, class, section, exam_type, student_name, roll_number,
-         total_marks, obtained_marks, grade, remarks, result_file)
+        (
+            session,
+            class,
+            section,
+            exam_type,
+            student_name,
+            roll_number,
+            total_marks,
+            obtained_marks,
+            grade,
+            remarks,
+            file
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -44,19 +58,26 @@ export const createResult = (req, res) => {
             file
         ],
         (err, result) => {
-            if (err) return res.status(500).json(err);
+
+            if (err) {
+                return res.status(500).json(err);
+            }
 
             res.status(201).json({
                 message: "Result created successfully",
                 id: result.insertId,
                 file
             });
+
         }
     );
 };
 
 
+
+/* ================= GET RESULTS ================= */
 export const getResults = (req, res) => {
+
     const {
         id,
         class: className,
@@ -68,57 +89,57 @@ export const getResults = (req, res) => {
     let sql = "SELECT * FROM results WHERE 1=1";
     let values = [];
 
-    // Search by ID
     if (id) {
         sql += " AND id = ?";
         values.push(id);
     }
 
-    // Search by Class
     if (className) {
         sql += " AND class = ?";
         values.push(className);
     }
 
-    // Search by Section
     if (section) {
         sql += " AND section = ?";
         values.push(section);
     }
 
-    // Search by Roll Number
     if (roll_number) {
         sql += " AND roll_number = ?";
         values.push(roll_number);
     }
 
-    // Search by Exam Type
     if (exam_type) {
         sql += " AND exam_type = ?";
         values.push(exam_type);
     }
 
     db.query(sql, values, (err, result) => {
+
         if (err) {
             return res.status(500).json(err);
         }
 
-        if (result.length === 0) {
-            return res.status(404).json({
-                message: "No result found"
-            });
-        }
+        const updatedResult = result.map(item => ({
+            ...item,
+            file_url: item.file
+                ? `${req.protocol}://${req.get("host")}/uploads/${item.file}`
+                : null
+        }));
 
         res.status(200).json({
-            count: result.length,
-            data: result
+            count: updatedResult.length,
+            data: updatedResult
         });
+
     });
 };
 
 
+
 /* ================= UPDATE RESULT ================= */
 export const updateResult = (req, res) => {
+
     const { id } = req.params;
 
     const {
@@ -137,10 +158,18 @@ export const updateResult = (req, res) => {
     const file = req.file ? req.file.filename : null;
 
     let sql = `
-        UPDATE results SET 
-        session=?, class=?, section=?, exam_type=?,
-        student_name=?, roll_number=?,
-        total_marks=?, obtained_marks=?, grade=?, remarks=?
+        UPDATE results
+        SET
+            session=?,
+            class=?,
+            section=?,
+            exam_type=?,
+            student_name=?,
+            roll_number=?,
+            total_marks=?,
+            obtained_marks=?,
+            grade=?,
+            remarks=?
     `;
 
     let values = [
@@ -157,7 +186,7 @@ export const updateResult = (req, res) => {
     ];
 
     if (file) {
-        sql += ", result_file=?";
+        sql += ", file=?";
         values.push(file);
     }
 
@@ -165,30 +194,50 @@ export const updateResult = (req, res) => {
     values.push(id);
 
     db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
+
+        if (err) {
+            return res.status(500).json(err);
+        }
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Result not found" });
+            return res.status(404).json({
+                message: "Result not found"
+            });
         }
 
         res.status(200).json({
             message: "Result updated successfully"
         });
+
     });
 };
 
 
+
 /* ================= DELETE RESULT ================= */
 export const deleteResult = (req, res) => {
+
     const { id } = req.params;
 
-    db.query("DELETE FROM results WHERE id=?", [id], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query(
+        "DELETE FROM results WHERE id=?",
+        [id],
+        (err, result) => {
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Result not found" });
+            if (err) {
+                return res.status(500).json(err);
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    message: "Result not found"
+                });
+            }
+
+            res.status(200).json({
+                message: "Result deleted successfully"
+            });
+
         }
-
-        res.status(200).json({ message: "Result deleted successfully" });
-    });
+    );
 };
