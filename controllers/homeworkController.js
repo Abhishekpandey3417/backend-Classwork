@@ -290,7 +290,7 @@ export const updateUploadHomework = (req, res) => {
     }
 
     if (file_url) {
-        sql += "file_url = ?, ";
+        sql += "file = ?, ";
         values.push(file_url);
     }
 
