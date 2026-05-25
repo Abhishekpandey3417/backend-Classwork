@@ -148,34 +148,51 @@ export const uploadHomework = (req, res) => {
         section
     } = req.body;
 
+    // Validate date
     const parsedDate = new Date(submission_dateline);
-    if (!submission_dateline || isNaN(parsedDate)) {
+    if (!submission_dateline || isNaN(parsedDate.getTime())) {
         return res.status(400).json({ message: "Valid submission_dateline required" });
     }
 
-    const formattedDate = parsedDate.toISOString().slice(0, 19).replace("T", " ");
+    const formattedDate = parsedDate
+        .toISOString()
+        .slice(0, 19)
+        .replace("T", " ");
 
-    const file_url = req.file ? req.file.filename : null;
+    // File handling (changed here)
+    const file = req.file ? req.file.filename : null;
 
     const sql = `
         INSERT INTO homework_upload 
-        (subject_name, topic_name, task_description, submission_dateline, file_url, class, section)
+        (subject_name, topic_name, task_description, submission_dateline, file, class, section)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.query(
-        sql,
-        [subject_name, topic_name, task_description, formattedDate, file_url, className, section],
-        (err, result) => {
-            if (err) return res.status(500).json(err);
+    const values = [
+        subject_name,
+        topic_name,
+        task_description,
+        formattedDate,
+        file,
+        className,
+        section
+    ];
 
-            res.status(201).json({
-                message: "Homework submitted successfully",
-                id: result.insertId,
-                file: file_url
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error("DB Error:", err);
+            return res.status(500).json({
+                message: "Database error",
+                error: err.sqlMessage
             });
         }
-    );
+
+        res.status(201).json({
+            message: "Homework submitted successfully",
+            id: result.insertId,
+            file: file
+        });
+    });
 };
 
 /* ================= GET UPLOADS ================= */
