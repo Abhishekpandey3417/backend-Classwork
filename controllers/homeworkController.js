@@ -243,13 +243,13 @@ export const updateUploadHomework = (req, res) => {
     let formattedDate = null;
     if (submission_dateline) {
         const parsedDate = new Date(submission_dateline);
-        if (isNaN(parsedDate)) {
+        if (isNaN(parsedDate.getTime())) {
             return res.status(400).json({ message: "Valid submission_dateline required" });
         }
         formattedDate = parsedDate.toISOString().slice(0, 19).replace("T", " ");
     }
 
-    const file_url = req.file ? req.file.filename : null;
+    const file = req.file ? req.file.filename : null;
 
     let sql = "UPDATE homework_upload SET ";
     let values = [];
@@ -289,9 +289,9 @@ export const updateUploadHomework = (req, res) => {
         values.push(section);
     }
 
-    if (file_url) {
+    if (file) {
         sql += "file = ?, ";
-        values.push(file_url);
+        values.push(file);
     }
 
     if (values.length === 0) {
@@ -309,14 +309,19 @@ export const updateUploadHomework = (req, res) => {
             return res.status(404).json({ message: "Upload not found" });
         }
 
-        db.query("SELECT file_url FROM homework_upload WHERE id = ?", [id], (err, rows) => {
-            if (err) return res.status(500).json(err);
+        // FIXED HERE
+        db.query(
+            "SELECT file FROM homework_upload WHERE id = ?",
+            [id],
+            (err, rows) => {
+                if (err) return res.status(500).json(err);
 
-            res.status(200).json({
-                message: "Upload updated successfully",
-                updatedFile: file_url || rows[0]?.file_url || null
-            });
-        });
+                res.status(200).json({
+                    message: "Upload updated successfully",
+                    updatedFile: file || rows[0]?.file || null
+                });
+            }
+        );
     });
 };
 
