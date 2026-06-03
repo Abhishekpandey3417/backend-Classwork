@@ -20,6 +20,7 @@ import hpcSyllabusRoutes from "./routes/hpcSyllabusRoutes.js";
 import studentProfileRoutes from "./routes/studentProfileRoutes.js";
 import dropdownSectionRoutes from "./routes/dropdownSectionRoutes.js";
 import academicDoubtRoutes from "./routes/academicDoubtRoutes.js";
+import complainPrincipalRoutes from "./routes/complainPrincipalRoutes.js"
 
 console.log("ENV CHECK:", process.env.DB_USER);
 
@@ -57,6 +58,7 @@ app.use("/api/hpc-syllabus", hpcSyllabusRoutes);
 app.use("/api/student-profile", studentProfileRoutes);
 app.use("/api/drop-down", dropdownSectionRoutes);
 app.use("/api/academic-doubt", academicDoubtRoutes);
+app.use("/api/complain-principal", complainPrincipalRoutes);
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
