@@ -19,7 +19,7 @@ export const createSyllabus = (req, res) => {
             status
         } = req.body;
 
-        const file = req.file ? req.file.filename : null;
+        const file = req.file ? req.file.path : null;
 
         const sql = `
             INSERT INTO syllabus 
