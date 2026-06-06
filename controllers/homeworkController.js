@@ -1,4 +1,4 @@
-import { getSchoolDB } from "../config/getSchoolDB.js";
+import { getSchoolDB } from "../config/schoolDb.js";
 
 const getDB = (req) => getSchoolDB(req.databaseName);
 
