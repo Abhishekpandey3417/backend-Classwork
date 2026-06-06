@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 export const createTask = (req, res) => {
     let { id, subject, topic, description, due_date, class: className, section } = req.body;

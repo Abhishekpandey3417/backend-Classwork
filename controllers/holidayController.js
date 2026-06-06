@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 export const createHoliday = (req, res) => {
     const { event_name, holiday_date } = req.body || {};

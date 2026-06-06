@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 /* ================= CREATE HPC SYLLABUS ================= */
 export const createHPCSyllabus = (req, res) => {

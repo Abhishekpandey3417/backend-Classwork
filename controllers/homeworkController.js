@@ -1,9 +1,13 @@
-import db from "../db.js";
+import { getSchoolDB } from "../config/getSchoolDB.js";
+
+const getDB = (req) => getSchoolDB(req.databaseName);
 
 
 
 /* ================= CREATE HOMEWORK ================= */
 export const createHomework = async (req, res) => {
+    const db = getDB(req);
+
     const {
         subject_name,
         topic_name,
@@ -15,17 +19,21 @@ export const createHomework = async (req, res) => {
 
     try {
         const [result] = await db.promise().query(
-            `INSERT INTO homework_list 
-            (subject_name, topic_name, description, due_date, class, section) 
+            `INSERT INTO homework_list
+            (subject_name, topic_name, description, due_date, class, section)
             VALUES (?, ?, ?, ?, ?, ?)`,
             [subject_name, topic_name, description, due_date, className, section]
         );
+
+        db.end();
 
         res.status(201).json({
             message: "Homework created successfully",
             id: result.insertId
         });
+
     } catch (error) {
+        db.end();
         res.status(500).json({ error: error.message });
     }
 };

@@ -1,7 +1,9 @@
 import mysql from "mysql2";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const getSchoolDB = (databaseName) => {
-
     return mysql.createConnection({
         host: process.env.MYSQL_HOST,
         port: process.env.MYSQL_PORT,
@@ -9,5 +11,4 @@ export const getSchoolDB = (databaseName) => {
         password: process.env.MYSQL_PASSWORD,
         database: databaseName
     });
-
 };

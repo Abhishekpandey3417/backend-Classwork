@@ -1,4 +1,4 @@
-import mysql from "mysql2";
+/*import mysql from "mysql2";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -254,4 +254,27 @@ const createTables = () => {
     });
 };
 
-export default db;
+export default db;*/
+
+import mysql from "mysql2";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const masterDb = mysql.createConnection({
+    host: process.env.MYSQL_HOST,
+    port: process.env.MYSQL_PORT,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MASTER_DATABASE
+});
+
+masterDb.connect((err) => {
+    if (err) {
+        console.error("Master DB Connection Failed:", err);
+    } else {
+        console.log("Master DB Connected");
+    }
+});
+
+export default masterDb;

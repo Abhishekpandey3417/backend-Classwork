@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 /* ================= CREATE RESULT ================= */
 export const createResult = (req, res) => {

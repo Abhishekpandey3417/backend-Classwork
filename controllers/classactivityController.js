@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 export const createActivity = (req, res) => {
     const { class: className, department, activity_name, activity_date, remark } = req.body || {};

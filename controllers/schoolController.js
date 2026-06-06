@@ -1,4 +1,4 @@
-import db from "../db.js";
+import db from "../config/db.js";
 
 export const createSchoolNotice = (req, res) => {
     const { heading, notice, date } = req.body || {};
