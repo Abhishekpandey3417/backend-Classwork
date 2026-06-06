@@ -41,37 +41,41 @@ export const createHomework = async (req, res) => {
 
 /* ================= GET HOMEWORK ================= */
 export const getHomework = (req, res) => {
+    const db = getDB(req);
+
     const { id } = req.params;
 
     let sql = "SELECT * FROM homework_list";
     let values = [];
 
-    // If ID is provided → fetch single
     if (id) {
         sql += " WHERE id = ?";
         values.push(id);
     }
 
     db.query(sql, values, (err, result) => {
+
+        db.end();
+
         if (err) return res.status(500).json(err);
 
-        // If ID was passed but no data found
         if (id && result.length === 0) {
-            return res.status(404).json({ message: "Homework not found" });
+            return res.status(404).json({
+                message: "Homework not found"
+            });
         }
 
-        // If ID → return single object
         if (id) {
             return res.json(result[0]);
         }
 
-        // If no ID → return all
         res.json(result);
     });
 };
 
 
 export const updateHomework = (req, res) => {
+    const db = getDB(req);
     const { id } = req.params;
 
     const allowedFields = [
@@ -137,16 +141,30 @@ export const updateHomework = (req, res) => {
 
 /* ================= DELETE HOMEWORK ================= */
 export const deleteHomework = (req, res) => {
+    const db = getDB(req);
+
     const { id } = req.params;
 
-    db.query("DELETE FROM homework_list WHERE id = ?", [id], (err) => {
-        if (err) return res.status(500).json(err);
-        res.json({ message: "Homework deleted" });
-    });
+    db.query(
+        "DELETE FROM homework_list WHERE id = ?",
+        [id],
+        (err) => {
+
+            db.end();
+
+            if (err) return res.status(500).json(err);
+
+            res.json({
+                message: "Homework deleted"
+            });
+        }
+    );
 };
 
 /* ================= UPLOAD HOMEWORK ================= */
 export const uploadHomework = (req, res) => {
+
+    const db = getDB(req);
     const {
         subject_name,
         topic_name,
@@ -187,24 +205,27 @@ export const uploadHomework = (req, res) => {
     ];
 
     db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error("DB Error:", err);
-            return res.status(500).json({
-                message: "Database error",
-                error: err.sqlMessage
-            });
-        }
 
-        res.status(201).json({
-            message: "Homework submitted successfully",
-            id: result.insertId,
-            file: file
+    db.end();
+
+    if (err) {
+        return res.status(500).json({
+            message: "Database error",
+            error: err.sqlMessage
         });
+    }
+
+    res.status(201).json({
+        message: "Homework submitted successfully",
+        id: result.insertId,
+        file
     });
+});
 };
 
 /* ================= GET UPLOADS ================= */
 export const getUploadsHomeworks = (req, res) => {
+    const db = getDB(req);
     const { homework_id, class: className, section } = req.query;
 
     let sql = "SELECT * FROM homework_upload WHERE 1=1";
@@ -225,14 +246,19 @@ export const getUploadsHomeworks = (req, res) => {
         values.push(section);
     }
 
-    db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.json(result);
-    });
+   db.query(sql, values, (err, result) => {
+
+    db.end();
+
+    if (err) return res.status(500).json(err);
+
+    res.json(result);
+});
 };
 
 /* ================= UPDATE UPLOAD ================= */
 export const updateUploadHomework = (req, res) => {
+    const db = getDB(req);
     const { id } = req.params;
     const {
         homework_id,
@@ -310,35 +336,42 @@ export const updateUploadHomework = (req, res) => {
     sql += " WHERE id = ?";
     values.push(id);
 
-    db.query(sql, values, (err, result) => {
+   db.query(
+    "SELECT file FROM homework_upload WHERE id = ?",
+    [id],
+    (err, rows) => {
+
+        db.end();
+
         if (err) return res.status(500).json(err);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Upload not found" });
-        }
-
-        // FIXED HERE
-        db.query(
-            "SELECT file FROM homework_upload WHERE id = ?",
-            [id],
-            (err, rows) => {
-                if (err) return res.status(500).json(err);
-
-                res.status(200).json({
-                    message: "Upload updated successfully",
-                    updatedFile: file || rows[0]?.file || null
-                });
-            }
-        );
-    });
+        res.status(200).json({
+            message: "Upload updated successfully",
+            updatedFile: file || rows[0]?.file || null
+        });
+    }
+);
 };
 
 /* ================= DELETE UPLOAD ================= */
 export const deleteUploadHomework = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.params;
 
-    db.query("DELETE FROM homework_upload WHERE id = ?", [id], (err) => {
-        if (err) return res.status(500).json(err);
-        res.status(200).json({ message: "Upload deleted" });
-    });
+    db.query(
+        "DELETE FROM homework_upload WHERE id = ?",
+        [id],
+        (err) => {
+
+            db.end();
+
+            if (err) return res.status(500).json(err);
+
+            res.status(200).json({
+                message: "Upload deleted"
+            });
+        }
+    );
 };
