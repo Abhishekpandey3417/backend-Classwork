@@ -1,7 +1,11 @@
-import db from "../config/db.js";
+import { getSchoolDB } from "../config/schoolDb.js";
+
+const getDB = (req) => getSchoolDB(req.databaseName);
 
 /* ================= CREATE RESULT ================= */
 export const createResult = (req, res) => {
+
+    const db = getDB(req);
 
     const {
         session,
@@ -16,9 +20,12 @@ export const createResult = (req, res) => {
         remarks
     } = req.body;
 
-    const file = req.file ? req.file.filename : null;
+    const file = req.file ? req.file.path : null;
 
     if (!session || !className || !section || !exam_type) {
+
+        db.end();
+
         return res.status(400).json({
             message: "Required fields missing"
         });
@@ -59,24 +66,31 @@ export const createResult = (req, res) => {
         ],
         (err, result) => {
 
+            db.end();
+
             if (err) {
-                return res.status(500).json(err);
+                console.log("MYSQL ERROR:", err);
+
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
             }
 
             res.status(201).json({
+                success: true,
                 message: "Result created successfully",
                 id: result.insertId,
                 file
             });
-
         }
     );
 };
 
-
-
 /* ================= GET RESULTS ================= */
 export const getResults = (req, res) => {
+
+    const db = getDB(req);
 
     const {
         id,
@@ -116,29 +130,34 @@ export const getResults = (req, res) => {
 
     db.query(sql, values, (err, result) => {
 
+        db.end();
+
         if (err) {
-            return res.status(500).json(err);
+            console.log("MYSQL ERROR:", err);
+
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
         }
 
         const updatedResult = result.map(item => ({
             ...item,
-            file_url: item.file
-                ? `${req.protocol}://${req.get("host")}/uploads/${item.file}`
-                : null
+            file_url: item.file || null
         }));
 
         res.status(200).json({
+            success: true,
             count: updatedResult.length,
             data: updatedResult
         });
-
     });
 };
 
-
-
 /* ================= UPDATE RESULT ================= */
 export const updateResult = (req, res) => {
+
+    const db = getDB(req);
 
     const { id } = req.params;
 
@@ -155,7 +174,7 @@ export const updateResult = (req, res) => {
         remarks
     } = req.body;
 
-    const file = req.file ? req.file.filename : null;
+    const file = req.file ? req.file.path : null;
 
     let sql = `
         UPDATE results
@@ -195,27 +214,35 @@ export const updateResult = (req, res) => {
 
     db.query(sql, values, (err, result) => {
 
+        db.end();
+
         if (err) {
-            return res.status(500).json(err);
+            console.log("MYSQL ERROR:", err);
+
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
         }
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
+                success: false,
                 message: "Result not found"
             });
         }
 
         res.status(200).json({
+            success: true,
             message: "Result updated successfully"
         });
-
     });
 };
 
-
-
 /* ================= DELETE RESULT ================= */
 export const deleteResult = (req, res) => {
+
+    const db = getDB(req);
 
     const { id } = req.params;
 
@@ -224,20 +251,31 @@ export const deleteResult = (req, res) => {
         [id],
         (err, result) => {
 
+            db.end();
+
             if (err) {
-                return res.status(500).json(err);
+                console.log("MYSQL ERROR:", err);
+
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
             }
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({
+                    success: false,
                     message: "Result not found"
                 });
             }
 
             res.status(200).json({
+                success: true,
                 message: "Result deleted successfully"
             });
-
         }
     );
 };
+
+
+

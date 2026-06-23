@@ -1,9 +1,17 @@
 import mysql from "mysql2";
 import dotenv from "dotenv";
 
+
 dotenv.config();
 
+
 export const getSchoolDB = (databaseName) => {
+    console.log("DATABASE RECEIVED:", databaseName);
+
+    if (!databaseName) {
+        throw new Error("Database name is missing");
+    }
+
     return mysql.createConnection({
         host: process.env.MYSQL_HOST,
         port: process.env.MYSQL_PORT,
@@ -12,3 +20,5 @@ export const getSchoolDB = (databaseName) => {
         database: databaseName
     });
 };
+
+export default getSchoolDB;

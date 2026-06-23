@@ -1,144 +1,178 @@
-import db from "../config/db.js";
+import { getSchoolDB } from "../config/schoolDb.js";
 
 /* ================= CREATE TIMETABLE ================= */
-export const createTimetable = (req, res) => {
-    const {
-        class: className,
-        section,
-        day_name,
-        period_name,
-        subject_name,
-        subject_teacher
-    } = req.body || {};
+export const createTimetable = async (req, res) => {
+    try {
 
-    const sql = `
-        INSERT INTO timetable
-        (class, section, day_name, period_name, subject_name, subject_teacher)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
+        const db = getSchoolDB(req.databaseName);
 
-    db.query(
-        sql,
-        [
-            className,
+        const {
+            class: className,
             section,
             day_name,
             period_name,
             subject_name,
             subject_teacher
-        ],
-        (err, result) => {
-            if (err) return res.status(500).json(err);
+        } = req.body;
 
-            res.status(201).json({
-                message: "Timetable created successfully",
-                id: result.insertId
-            });
-        }
-    );
+        const [result] = await db.promise().query(
+            `INSERT INTO timetable
+            (
+                class,
+                section,
+                day_name,
+                period_name,
+                subject_name,
+                subject_teacher
+            )
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                className,
+                section,
+                day_name,
+                period_name,
+                subject_name,
+                subject_teacher
+            ]
+        );
+
+        db.end();
+
+        res.status(201).json({
+            message: "Timetable created successfully",
+            id: result.insertId
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
 };
 
 
 /* ================= GET TIMETABLE ================= */
-export const getTimetable = (req, res) => {
-    const { id, class: className, section, day_name } = req.query;
+export const getTimetable = async (req, res) => {
+    try {
 
-    let sql = "SELECT * FROM timetable WHERE 1=1";
-    let values = [];
+        const db = getSchoolDB(req.databaseName);
 
-    if (id) {
-        sql += " AND id = ?";
-        values.push(id);
+        const {
+            id,
+            class: className,
+            section,
+            day_name
+        } = req.query;
+
+        let sql = "SELECT * FROM timetable WHERE 1=1";
+        let values = [];
+
+        if (id) {
+            sql += " AND id = ?";
+            values.push(id);
+        }
+
+        if (className) {
+            sql += " AND class = ?";
+            values.push(className);
+        }
+
+        if (section) {
+            sql += " AND section = ?";
+            values.push(section);
+        }
+
+        if (day_name) {
+            sql += " AND day_name = ?";
+            values.push(day_name);
+        }
+
+        const [rows] = await db.promise().query(sql, values);
+
+        db.end();
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
     }
-
-    if (className) {
-        sql += " AND class = ?";
-        values.push(className);
-    }
-
-    if (section) {
-        sql += " AND section = ?";
-        values.push(section);
-    }
-
-    if (day_name) {
-        sql += " AND day_name = ?";
-        values.push(day_name);
-    }
-
-    db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
-
-        res.status(200).json(result);
-    });
 };
 
 
 /* ================= UPDATE TIMETABLE ================= */
-export const updateTimetable = (req, res) => {
-    const { id } = req.params;
+export const updateTimetable = async (req, res) => {
+    try {
 
-    const {
-        class: className,
-        section,
-        day_name,
-        period_name,
-        subject_name,
-        subject_teacher
-    } = req.body || {};
+        const db = getSchoolDB(req.databaseName);
 
-    if (!id) {
-        return res.status(400).json({
-            message: "Timetable ID required"
-        });
-    }
+        const { id } = req.params;
 
-    let sql = "UPDATE timetable SET ";
-    let values = [];
+        if (!id) {
+            db.end();
+            return res.status(400).json({
+                message: "Timetable ID required"
+            });
+        }
 
-    if (className) {
-        sql += "`class` = ?, ";
-        values.push(className);
-    }
+        const {
+            class: className,
+            section,
+            day_name,
+            period_name,
+            subject_name,
+            subject_teacher
+        } = req.body;
 
-    if (section) {
-        sql += "section = ?, ";
-        values.push(section);
-    }
+        let sql = "UPDATE timetable SET ";
+        let values = [];
 
-    if (day_name) {
-        sql += "day_name = ?, ";
-        values.push(day_name);
-    }
+        if (className !== undefined) {
+            sql += "`class`=?, ";
+            values.push(className);
+        }
 
-    if (period_name) {
-        sql += "period_name = ?, ";
-        values.push(period_name);
-    }
+        if (section !== undefined) {
+            sql += "section=?, ";
+            values.push(section);
+        }
 
-    if (subject_name) {
-        sql += "subject_name = ?, ";
-        values.push(subject_name);
-    }
+        if (day_name !== undefined) {
+            sql += "day_name=?, ";
+            values.push(day_name);
+        }
 
-    if (subject_teacher) {
-        sql += "subject_teacher = ?, ";
-        values.push(subject_teacher);
-    }
+        if (period_name !== undefined) {
+            sql += "period_name=?, ";
+            values.push(period_name);
+        }
 
-    if (values.length === 0) {
-        return res.status(400).json({
-            message: "No fields provided"
-        });
-    }
+        if (subject_name !== undefined) {
+            sql += "subject_name=?, ";
+            values.push(subject_name);
+        }
 
-    sql = sql.slice(0, -2);
+        if (subject_teacher !== undefined) {
+            sql += "subject_teacher=?, ";
+            values.push(subject_teacher);
+        }
 
-    sql += " WHERE id = ?";
-    values.push(id);
+        if (values.length === 0) {
+            db.end();
+            return res.status(400).json({
+                message: "No fields provided"
+            });
+        }
 
-    db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
+        sql = sql.slice(0, -2);
+        sql += " WHERE id=?";
+
+        values.push(id);
+
+        const [result] = await db.promise().query(sql, values);
+
+        db.end();
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -149,29 +183,43 @@ export const updateTimetable = (req, res) => {
         res.status(200).json({
             message: "Timetable updated successfully"
         });
-    });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
 };
 
 
 /* ================= DELETE TIMETABLE ================= */
-export const deleteTimetable = (req, res) => {
-    const { id } = req.params;
+export const deleteTimetable = async (req, res) => {
+    try {
 
-    db.query(
-        "DELETE FROM timetable WHERE id = ?",
-        [id],
-        (err, result) => {
-            if (err) return res.status(500).json(err);
+        const db = getSchoolDB(req.databaseName);
 
-            if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    message: "Timetable not found"
-                });
-            }
+        const { id } = req.params;
 
-            res.status(200).json({
-                message: "Timetable deleted successfully"
+        const [result] = await db.promise().query(
+            "DELETE FROM timetable WHERE id=?",
+            [id]
+        );
+
+        db.end();
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Timetable not found"
             });
         }
-    );
+
+        res.status(200).json({
+            message: "Timetable deleted successfully"
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
 };

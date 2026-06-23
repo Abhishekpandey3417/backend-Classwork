@@ -1,7 +1,15 @@
-import masterDb from "../config/masterDb.js";
+import masterDb from "../config/db.js";
 
 export const schoolMiddleware = (req, res, next) => {
+
+    console.log("\n========================");
+    console.log("SCHOOL MIDDLEWARE");
+    console.log("Method:", req.method);
+    console.log("URL:", req.originalUrl);
+
     const schoolCode = req.headers["school-code"];
+
+    console.log("School Code:", schoolCode);
 
     if (!schoolCode) {
         return res.status(400).json({
@@ -14,12 +22,6 @@ export const schoolMiddleware = (req, res, next) => {
         "SELECT * FROM schools WHERE school_code = ?",
         [schoolCode],
         (err, result) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
 
             if (result.length === 0) {
                 return res.status(404).json({
@@ -28,6 +30,8 @@ export const schoolMiddleware = (req, res, next) => {
                 });
             }
 
+            console.log("Database:", result[0].database_name);
+
             req.school = result[0];
             req.databaseName = result[0].database_name;
 
@@ -35,3 +39,5 @@ export const schoolMiddleware = (req, res, next) => {
         }
     );
 };
+
+export default schoolMiddleware;

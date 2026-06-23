@@ -1,6 +1,11 @@
-import db from "../config/db.js";
+import { getSchoolDB } from "../config/schoolDb.js";
 
+const getDB = (req) => getSchoolDB(req.databaseName);
+
+/* ================= CREATE NOTICE ================= */
 export const createNotice = (req, res) => {
+
+    const db = getDB(req);
 
     const {
         class: className,
@@ -11,44 +16,78 @@ export const createNotice = (req, res) => {
         date_posted
     } = req.body || {};
 
-    // ✅ check required fields
     if (!className || !section || !event_name || !date_posted) {
-        return res.status(400).json({ message: "All required fields must be provided" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "All required fields must be provided"
+        });
     }
 
-    // ✅ CLEAN + SAFE DATE PARSE
     const parsedDate = new Date(String(date_posted).trim());
 
     if (!date_posted || isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ message: "Valid date_posted required" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "Valid date_posted required"
+        });
     }
 
-    const formattedDate = parsedDate.toISOString().slice(0, 19).replace("T", " ");
+    const formattedDate =
+        parsedDate.toISOString().slice(0, 19).replace("T", " ");
 
     const sql = `
-        INSERT INTO classnotice 
-        (\`class\`, section, event_name, description, remark, date_posted)
+        INSERT INTO classnotice
+        (
+            \`class\`,
+            section,
+            event_name,
+            description,
+            remark,
+            date_posted
+        )
         VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     db.query(
         sql,
-        [className, section, event_name, description, remark, formattedDate],
+        [
+            className,
+            section,
+            event_name,
+            description,
+            remark,
+            formattedDate
+        ],
         (err, result) => {
-            if (err) return res.status(500).json(err);
+
+            db.end();
+
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
 
             res.status(201).json({
+                success: true,
                 message: "Notice created",
                 id: result.insertId
             });
         }
     );
-
 };
 
 
 /* ================= GET NOTICE ================= */
 export const getNotices = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.query;
 
     let sql = "SELECT * FROM classnotice";
@@ -60,19 +99,48 @@ export const getNotices = (req, res) => {
     }
 
     db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.status(200).json(result);
+
+        db.end();
+
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            total: result.length,
+            data: result
+        });
     });
 };
 
 
 /* ================= UPDATE NOTICE ================= */
 export const updateNotice = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.params;
-    const { class: className, section, event_name, description, remark, date_posted } = req.body;
+
+    const {
+        class: className,
+        section,
+        event_name,
+        description,
+        remark,
+        date_posted
+    } = req.body;
 
     if (!id) {
-        return res.status(400).json({ message: "Notice ID is required" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "Notice ID is required"
+        });
     }
 
     let sql = "UPDATE classnotice SET ";
@@ -104,18 +172,32 @@ export const updateNotice = (req, res) => {
     }
 
     if (date_posted) {
+
         const parsedDate = new Date(date_posted);
-        if (isNaN(parsedDate)) {
-            return res.status(400).json({ message: "Invalid date_posted" });
+
+        if (isNaN(parsedDate.getTime())) {
+
+            db.end();
+
+            return res.status(400).json({
+                message: "Invalid date_posted"
+            });
         }
 
-        const formattedDate = parsedDate.toISOString().slice(0, 19).replace("T", " ");
+        const formattedDate =
+            parsedDate.toISOString().slice(0, 19).replace("T", " ");
+
         sql += "date_posted = ?, ";
         values.push(formattedDate);
     }
 
     if (values.length === 0) {
-        return res.status(400).json({ message: "No fields provided to update" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "No fields provided to update"
+        });
     }
 
     sql = sql.slice(0, -2);
@@ -123,28 +205,63 @@ export const updateNotice = (req, res) => {
     values.push(id);
 
     db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Notice not found" });
+        db.end();
+
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
         }
 
-        res.status(200).json({ message: "Notice updated successfully" });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Notice not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Notice updated successfully"
+        });
     });
 };
 
 
 /* ================= DELETE NOTICE ================= */
 export const deleteNotice = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.params;
 
-    db.query("DELETE FROM classnotice WHERE id = ?", [id], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query(
+        "DELETE FROM classnotice WHERE id = ?",
+        [id],
+        (err, result) => {
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Notice not found" });
+            db.end();
+
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Notice not found"
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Notice deleted successfully"
+            });
         }
-
-        res.status(200).json({ message: "Notice deleted successfully" });
-    });
+    );
 };

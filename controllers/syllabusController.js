@@ -1,9 +1,14 @@
-import db from "../config/db.js";
+
+import { getSchoolDB } from "../config/schoolDb.js";
+const getDB = (req) => getSchoolDB(req.databaseName);
 
 /* ================= CREATE SYLLABUS ================= */
 export const createSyllabus = (req, res) => {
 
+    const db = getDB(req);
+
     try {
+
         const {
             session,
             class: className,
@@ -22,7 +27,7 @@ export const createSyllabus = (req, res) => {
         const file = req.file ? req.file.path : null;
 
         const sql = `
-            INSERT INTO syllabus 
+            INSERT INTO syllabus
             (
                 session,
                 class,
@@ -60,6 +65,8 @@ export const createSyllabus = (req, res) => {
             ],
             (err, result) => {
 
+                db.end();
+
                 if (err) {
                     console.log("MYSQL ERROR:", err);
 
@@ -80,6 +87,8 @@ export const createSyllabus = (req, res) => {
 
     } catch (error) {
 
+        db.end();
+
         console.log("SERVER ERROR:", error);
 
         res.status(500).json({
@@ -89,10 +98,10 @@ export const createSyllabus = (req, res) => {
     }
 };
 
-
-
 /* ================= GET ALL / GET BY ID ================= */
 export const getSyllabus = (req, res) => {
+
+    const db = getDB(req);
 
     try {
 
@@ -109,6 +118,8 @@ export const getSyllabus = (req, res) => {
         sql += " ORDER BY id DESC";
 
         db.query(sql, values, (err, result) => {
+
+            db.end();
 
             if (err) {
                 console.log("MYSQL ERROR:", err);
@@ -128,6 +139,8 @@ export const getSyllabus = (req, res) => {
 
     } catch (error) {
 
+        db.end();
+
         console.log("SERVER ERROR:", error);
 
         res.status(500).json({
@@ -137,10 +150,10 @@ export const getSyllabus = (req, res) => {
     }
 };
 
-
-
 /* ================= SEARCH SYLLABUS ================= */
 export const searchSyllabus = (req, res) => {
+
+    const db = getDB(req);
 
     try {
 
@@ -178,6 +191,8 @@ export const searchSyllabus = (req, res) => {
 
         db.query(sql, values, (err, result) => {
 
+            db.end();
+
             if (err) {
                 console.log("MYSQL ERROR:", err);
 
@@ -196,6 +211,8 @@ export const searchSyllabus = (req, res) => {
 
     } catch (error) {
 
+        db.end();
+
         console.log("SERVER ERROR:", error);
 
         res.status(500).json({
@@ -205,17 +222,14 @@ export const searchSyllabus = (req, res) => {
     }
 };
 
-
-
 /* ================= UPDATE SYLLABUS ================= */
 export const updateSyllabus = (req, res) => {
+
+    const db = getDB(req);
 
     try {
 
         const { id } = req.params;
-
-        console.log("BODY:", req.body);
-        console.log("FILE:", req.file);
 
         const {
             session,
@@ -234,9 +248,7 @@ export const updateSyllabus = (req, res) => {
 
         const file = req.file ? req.file.filename : null;
 
-        let sql = `
-            UPDATE syllabus SET
-        `;
+        let sql = `UPDATE syllabus SET `;
 
         let updates = [];
         let values = [];
@@ -307,6 +319,9 @@ export const updateSyllabus = (req, res) => {
         }
 
         if (updates.length === 0) {
+
+            db.end();
+
             return res.status(400).json({
                 success: false,
                 message: "No fields provided for update"
@@ -314,15 +329,15 @@ export const updateSyllabus = (req, res) => {
         }
 
         sql += updates.join(", ");
-
         sql += " WHERE id=?";
 
         values.push(id);
 
         db.query(sql, values, (err, result) => {
 
-            if (err) {
+            db.end();
 
+            if (err) {
                 console.log("MYSQL ERROR:", err);
 
                 return res.status(500).json({
@@ -332,7 +347,6 @@ export const updateSyllabus = (req, res) => {
             }
 
             if (result.affectedRows === 0) {
-
                 return res.status(404).json({
                     success: false,
                     message: "Syllabus not found"
@@ -347,6 +361,8 @@ export const updateSyllabus = (req, res) => {
 
     } catch (error) {
 
+        db.end();
+
         console.log("SERVER ERROR:", error);
 
         res.status(500).json({
@@ -356,10 +372,10 @@ export const updateSyllabus = (req, res) => {
     }
 };
 
-
-
 /* ================= DELETE SYLLABUS ================= */
 export const deleteSyllabus = (req, res) => {
+
+    const db = getDB(req);
 
     try {
 
@@ -370,8 +386,9 @@ export const deleteSyllabus = (req, res) => {
             [id],
             (err, result) => {
 
-                if (err) {
+                db.end();
 
+                if (err) {
                     console.log("MYSQL ERROR:", err);
 
                     return res.status(500).json({
@@ -381,7 +398,6 @@ export const deleteSyllabus = (req, res) => {
                 }
 
                 if (result.affectedRows === 0) {
-
                     return res.status(404).json({
                         success: false,
                         message: "Syllabus not found"
@@ -397,6 +413,8 @@ export const deleteSyllabus = (req, res) => {
 
     } catch (error) {
 
+        db.end();
+
         console.log("SERVER ERROR:", error);
 
         res.status(500).json({
@@ -405,3 +423,5 @@ export const deleteSyllabus = (req, res) => {
         });
     }
 };
+
+

@@ -1,28 +1,58 @@
-import db from "../config/db.js";
+import { getSchoolDB } from "../config/schoolDb.js";
 
+const getDB = (req) => getSchoolDB(req.databaseName);
+
+/* ================= CREATE HOLIDAY ================= */
 export const createHoliday = (req, res) => {
+
+    const db = getDB(req);
+
     const { event_name, holiday_date } = req.body || {};
 
     if (!event_name || !holiday_date) {
-        return res.status(400).json({ message: "All fields required" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "All fields required"
+        });
     }
 
     const sql = `
-        INSERT INTO holiday_calendar (event_name, holiday_date)
+        INSERT INTO holiday_calendar
+        (event_name, holiday_date)
         VALUES (?, ?)
     `;
 
-    db.query(sql, [event_name, holiday_date], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query(
+        sql,
+        [event_name, holiday_date],
+        (err, result) => {
 
-        res.status(201).json({
-            message: "Holiday added",
-            id: result.insertId
-        });
-    });
+            db.end();
+
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+
+            res.status(201).json({
+                success: true,
+                message: "Holiday added",
+                id: result.insertId
+            });
+        }
+    );
 };
 
+
+/* ================= GET HOLIDAYS ================= */
 export const getHolidays = (req, res) => {
+
+    const db = getDB(req);
+
     const { month, year } = req.query;
 
     let sql = "SELECT * FROM holiday_calendar WHERE 1=1";
@@ -39,17 +69,40 @@ export const getHolidays = (req, res) => {
     }
 
     db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
-        res.status(200).json(result);
+
+        db.end();
+
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            total: result.length,
+            data: result
+        });
     });
 };
 
+
+/* ================= UPDATE HOLIDAY ================= */
 export const updateHoliday = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.params;
     const { event_name, holiday_date } = req.body;
 
     if (!id) {
-        return res.status(400).json({ message: "Holiday ID is required" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "Holiday ID is required"
+        });
     }
 
     let sql = "UPDATE holiday_calendar SET ";
@@ -61,16 +114,29 @@ export const updateHoliday = (req, res) => {
     }
 
     if (holiday_date) {
+
         const parsedDate = new Date(holiday_date);
+
         if (isNaN(parsedDate)) {
-            return res.status(400).json({ message: "Invalid holiday_date" });
+
+            db.end();
+
+            return res.status(400).json({
+                message: "Invalid holiday_date"
+            });
         }
+
         sql += "holiday_date = ?, ";
         values.push(holiday_date);
     }
 
     if (values.length === 0) {
-        return res.status(400).json({ message: "No fields to update" });
+
+        db.end();
+
+        return res.status(400).json({
+            message: "No fields to update"
+        });
     }
 
     sql = sql.slice(0, -2);
@@ -78,26 +144,63 @@ export const updateHoliday = (req, res) => {
     values.push(id);
 
     db.query(sql, values, (err, result) => {
-        if (err) return res.status(500).json(err);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Holiday not found" });
+        db.end();
+
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
         }
 
-        res.status(200).json({ message: "Holiday updated successfully" });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Holiday not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Holiday updated successfully"
+        });
     });
 };
 
+
+/* ================= DELETE HOLIDAY ================= */
 export const deleteHoliday = (req, res) => {
+
+    const db = getDB(req);
+
     const { id } = req.params;
 
-    db.query("DELETE FROM holiday_calendar WHERE id = ?", [id], (err, result) => {
-        if (err) return res.status(500).json(err);
+    db.query(
+        "DELETE FROM holiday_calendar WHERE id = ?",
+        [id],
+        (err, result) => {
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Holiday not found" });
+            db.end();
+
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    error: err.message
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Holiday not found"
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Holiday deleted successfully"
+            });
         }
-
-        res.status(200).json({ message: "Holiday deleted successfully" });
-    });
+    );
 };

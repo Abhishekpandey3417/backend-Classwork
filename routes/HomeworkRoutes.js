@@ -11,18 +11,43 @@ import {
 } from "../controllers/homeworkController.js";
 
 import upload from "../middleware/upload.js";
+import schoolMiddleware from "../middleware/schoolMiddleware.js";
 
 const router = express.Router();
 
-// Homework list
-router.post("/createHomework", createHomework);
+/* ================= HOMEWORK ================= */
+
 router.get("/getAllHomeworks", getHomework);
+router.post("/createHomework", createHomework);
 router.put("/updateHomework/:id", updateHomework);
 router.delete("/deleteHomework/:id", deleteHomework);
-router.post("/uploadHomework", upload.single("file"), uploadHomework);
 
-router.put("/uploadHomework/:id", upload.single("file"), updateUploadHomework);
-router.get("/getAlUploadedHomeworks", getUploadsHomeworks);
-router.delete("/deleteuploadedHomework/:id", deleteUploadHomework);
+/* ================= HOMEWORK UPLOAD ================= */
+
+router.post(
+    "/uploadHomework",
+    schoolMiddleware,
+    upload.single("file"),
+    uploadHomework
+);
+
+router.put(
+    "/uploadHomework/:id",
+    schoolMiddleware,
+    upload.single("file"),
+    updateUploadHomework
+);
+
+router.get(
+    "/getAlUploadedHomeworks",
+    schoolMiddleware,
+    getUploadsHomeworks
+);
+
+router.delete(
+    "/deleteuploadedHomework/:id",
+    schoolMiddleware,
+    deleteUploadHomework
+);
 
 export default router;

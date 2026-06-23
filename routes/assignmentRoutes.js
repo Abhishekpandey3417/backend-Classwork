@@ -14,7 +14,7 @@ const router = express.Router();
 router.post("/create", upload.single("file"), createAssignment);          // Upload
 router.get("/getAll", getAssignments);                   // List
 router.get("/search", searchAssignments);          // Search
-router.put("/:id", updateAssignment);
-router.delete("/:id", deleteAssignment);
+router.put("/update/:id", updateAssignment);
+router.delete("/delete/:id", deleteAssignment);
 
 export default router;

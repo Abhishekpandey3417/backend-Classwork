@@ -6,18 +6,23 @@ const getDB = (req) => getSchoolDB(req.databaseName);
 
 /* ================= CREATE HOMEWORK ================= */
 export const createHomework = async (req, res) => {
-    const db = getDB(req);
-
-    const {
-        subject_name,
-        topic_name,
-        description,
-        due_date,
-        class: className,
-        section
-    } = req.body;
-
     try {
+     console.log("CREATE DATABASE =", req.databaseName);
+
+const db = getSchoolDB(req.databaseName);
+
+const [dbName] = await db.promise().query("SELECT DATABASE() AS db");
+console.log("MYSQL DATABASE =", dbName);
+
+        const {
+            subject_name,
+            topic_name,
+            description,
+            due_date,
+            class: className,
+            section
+        } = req.body;
+
         const [result] = await db.promise().query(
             `INSERT INTO homework_list
             (subject_name, topic_name, description, due_date, class, section)
@@ -27,21 +32,31 @@ export const createHomework = async (req, res) => {
 
         db.end();
 
-        res.status(201).json({
+        return res.status(201).json({
+            success: true,
             message: "Homework created successfully",
             id: result.insertId
         });
 
     } catch (error) {
-        db.end();
-        res.status(500).json({ error: error.message });
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
-
 /* ================= GET HOMEWORK ================= */
 export const getHomework = (req, res) => {
-    const db = getDB(req);
+    console.log("GET DATABASE =", req.databaseName);
+
+const db = getSchoolDB(req.databaseName);
+
+db.query("SELECT DATABASE() AS db", (err, rows) => {
+    console.log("MYSQL DATABASE =", rows);
+});
 
     const { id } = req.params;
 
