@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import masterDb from "../config/db.js";
 import getSchoolDB from "../config/schoolDb.js";
 
