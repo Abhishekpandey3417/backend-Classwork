@@ -14,6 +14,8 @@ import authRoutes from "./routes/authRoutes.js";
 
 /* ================= FEATURE ROUTES ================= */
 
+
+import signupRoutes from "./routes/signupRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import homeworkRoutes from "./routes/HomeworkRoutes.js";
 import assignmentRoutes from "./routes/assignmentRoutes.js";
@@ -99,6 +101,7 @@ app.use("/api/student-profile", schoolMiddleware, studentProfileRoutes);
 app.use("/api/drop-down", schoolMiddleware, dropdownSectionRoutes);
 app.use("/api/academic-doubt", schoolMiddleware, academicDoubtRoutes);
 app.use("/api/complain-principal", schoolMiddleware, complainPrincipalRoutes);
+app.use("/api/signup", schoolMiddleware, signupRoutes);
 
 /* ================= ERROR HANDLER ================= */
 
